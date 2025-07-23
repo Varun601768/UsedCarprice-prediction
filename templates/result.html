@@ -1,0 +1,1519 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Car Price Prediction Results</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0c0c0c 0%, #1a1a2e 50%, #16213e 100%);
+            color: white;
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+
+        .background-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at 50% 50%, rgba(59, 130, 246, 0.1) 0%, transparent 70%);
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        .nav-header {
+            position: sticky;
+            top: 0;
+            padding: 1.5rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 100;
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+            padding: 2rem;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            font-weight: 900;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6, #06b6d4);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            color: #94a3b8;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 1.5rem;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(59, 130, 246, 0.2);
+        }
+
+        .stat-card h3 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #3b82f6;
+            margin-bottom: 0.5rem;
+            animation: countUp 2s ease-out;
+        }
+
+        .stat-card p {
+            color: #94a3b8;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        @keyframes countUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .chart-container {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            min-height: 400px;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .chart-title {
+            text-align: center;
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 2rem;
+            color: #3b82f6;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .chart-filters {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            padding: 0.5rem 1rem;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+        }
+
+        .filter-btn.active {
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            border-color: #3b82f6;
+        }
+
+        .filter-btn:hover {
+            background: rgba(59, 130, 246, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .brand-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .brand-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .brand-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(59, 130, 246, 0.15);
+        }
+
+        .brand-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .brand-name {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: white;
+        }
+
+        .brand-sales {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #3b82f6;
+        }
+
+        .trend-indicator {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .trend-up {
+            color: #10b981;
+        }
+
+        .trend-down {
+            color: #ef4444;
+        }
+
+        .loading-spinner {
+            text-align: center;
+            padding: 2rem;
+            display: none;
+        }
+
+        .spinner {
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            border-top: 3px solid #3b82f6;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+
+        .error-message {
+            text-align: center;
+            color: #ef4444;
+            padding: 2rem;
+            font-size: 1.1rem;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .chart-container {
+                min-height: 300px;
+            }
+            
+            .chart-filters {
+                gap: 0.5rem;
+            }
+            
+            .filter-btn {
+                padding: 0.4rem 0.8rem;
+                font-size: 0.8rem;
+            }
+        }
+
+        .nav-logo {
+            font-size: 1.5rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6, #06b6d4);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            list-style: none;
+            align-items: center;
+        }
+
+        .nav-links a {
+            color: white;
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s ease;
+            padding: 0.5rem 1rem;
+            border-radius: 25px;
+            transition: all 0.3s ease;
+        }
+
+        .nav-links a:hover {
+            color: #3b82f6;
+            background: rgba(59, 130, 246, 0.1);
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+            position: relative;
+            z-index: 10;
+        }
+
+        .result-container {
+            display: grid;
+            gap: 2rem;
+        }
+
+        .price-card {
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            border-radius: 20px;
+            padding: 3rem;
+            text-align: center;
+            box-shadow: 0 20px 40px rgba(59, 130, 246, 0.3);
+            margin-bottom: 2rem;
+        }
+
+        .price-value {
+            font-size: 3.5rem;
+            font-weight: 900;
+            margin-bottom: 0.5rem;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .price-label {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            margin-bottom: 1rem;
+        }
+
+        .confidence-bar {
+            width: 100%;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 1rem 0;
+        }
+
+        .confidence-fill {
+            height: 100%;
+            width: 85%;
+            background: linear-gradient(90deg, #10b981, #06b6d4);
+            border-radius: 4px;
+            animation: fillAnimation 2s ease-in-out;
+        }
+
+        @keyframes fillAnimation {
+            0% { width: 0; }
+            100% { width: 85%; }
+        }
+
+        .metrics-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .metric-item {
+            text-align: center;
+            padding: 1.5rem;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            transition: all 0.3s ease;
+        }
+
+        .metric-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(59, 130, 246, 0.2);
+        }
+
+        .metric-item h4 {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #3b82f6;
+            margin-bottom: 0.5rem;
+        }
+
+        .metric-item p {
+            color: #94a3b8;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .charts-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .chart-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 2rem;
+            min-height: 400px;
+        }
+
+        .chart-card h3 {
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            color: #3b82f6;
+            text-align: center;
+        }
+
+        .chart-container {
+            position: relative;
+            min-height: 300px;
+            width: 100%;
+        }
+
+        .details-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .detail-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 2rem;
+            transition: all 0.3s ease;
+        }
+
+        .detail-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(59, 130, 246, 0.15);
+        }
+
+        .detail-card h3 {
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            color: #3b82f6;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .detail-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.8rem 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .detail-item:last-child {
+            border-bottom: none;
+        }
+
+        .detail-label {
+            font-weight: 600;
+            color: #94a3b8;
+        }
+
+        .detail-value {
+            font-weight: 700;
+            color: white;
+        }
+
+        .alerts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .alert-card {
+            padding: 1.5rem;
+            border-radius: 15px;
+            border-left: 4px solid;
+        }
+
+        .alert-critical {
+            background: rgba(239, 68, 68, 0.1);
+            border-left-color: #ef4444;
+        }
+
+        .alert-warning {
+            background: rgba(245, 158, 11, 0.1);
+            border-left-color: #f59e0b;
+        }
+
+        .alert-info {
+            background: rgba(59, 130, 246, 0.1);
+            border-left-color: #3b82f6;
+        }
+
+        .alert-card h3 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .alert-card p {
+            color: #94a3b8;
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin-top: 2rem;
+        }
+
+        .btn {
+            padding: 1rem 2rem;
+            border: none;
+            border-radius: 25px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            color: white;
+            box-shadow: 0 8px 25px rgba(59, 130, 246, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 35px rgba(59, 130, 246, 0.4);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .insurance-valid {
+            color: #10b981;
+        }
+
+        .insurance-expired {
+            color: #ef4444;
+        }
+
+        @media (max-width: 768px) {
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .price-value {
+                font-size: 2.5rem;
+            }
+            
+            .action-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .btn {
+                width: 100%;
+                max-width: 300px;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="background-overlay"></div>
+    
+    <div class="nav-header">
+        <div class="nav-logo">
+            <i class="fas fa-car"></i> UsedCarPredict AI
+        </div>
+        <nav class="nav-links">
+            <a href="/hr"><i class="fas fa-home"></i> Home</a>
+            <a href="/pre"><i class="fas fa-calculator"></i> Predict</a>
+            <a href="/con"><i class="fas fa-envelope"></i> Contact</a>
+        </nav>
+    </div>
+
+    <div class="container">
+        <!-- Error State -->
+        {% if error %}
+        <div class="header error-header">
+            <h1><i class="fas fa-exclamation-triangle"></i> Prediction Error</h1>
+            <p>We encountered an issue processing your request</p>
+        </div>
+
+        <div class="result-container">
+            <div class="error-card">
+                <h2><i class="fas fa-times-circle"></i> Error Details</h2>
+                <div class="error-message">
+                    {{ error }}
+                </div>
+                <p>Please check your input values and try again.</p>
+            </div>
+
+            <div class="action-buttons">
+                <a href="/" class="btn btn-primary">
+                    <i class="fas fa-arrow-left"></i> Try Again
+                </a>
+            </div>
+        </div>
+        
+        <!-- Success State -->
+        {% else %}
+        <div class="header">
+            <h1><i class="fas fa-check-circle"></i> Price Prediction Complete</h1>
+            <p>Based on advanced machine learning analysis</p>
+        </div>
+
+        <div class="result-container">
+            <div class="price-card">
+                <div class="price-value">₹{{ "{:,.0f}".format(predicted_price) }}</div>
+                <div class="price-label">Estimated Market Value</div>
+                <div class="confidence-bar">
+                    <div class="confidence-fill"></div>
+                </div>
+                <p style="margin-top: 10px; opacity: 0.9;">{{ prediction_result.confidence_range }}</p>
+            </div>
+
+            <!-- Alerts Section -->
+            <div class="alerts-grid">
+                {% for alert in real_time_info.alerts %}
+                <div class="alert-card alert-{{ alert.type }}">
+                    <h3><i class="fas fa-{{ alert.type == 'critical' and 'exclamation-triangle' or alert.type == 'warning' and 'exclamation-circle' or 'check-circle' }}"></i> {{ alert.title }}</h3>
+                    <p>{{ alert.message }}</p>
+                    <p><strong>Action:</strong> {{ alert.action }}</p>
+                    <p><strong>Estimated Cost:</strong> {{ alert.estimated_cost }}</p>
+                </div>
+                {% endfor %}
+            </div>
+
+            <div class="metrics-card">
+                <h3 style="text-align: center; margin-bottom: 20px;">
+                    <i class="fas fa-chart-line"></i> Key Metrics
+                </h3>
+                <div class="metrics-grid">
+                    <div class="metric-item">
+                        <h4>{{ car_age }}</h4>
+                        <p>Years Old</p>
+                    </div>
+                    <div class="metric-item">
+                        <h4>{{ "{:,.0f}".format(km_driven) }}</h4>
+                        <p>KM Driven</p>
+                    </div>
+                    <div class="metric-item">
+                        <h4>{{ mileage }}</h4>
+                        <p>KMPL</p>
+                    </div>
+                    <div class="metric-item">
+                        <h4>{{ max_power }}</h4>
+                        <p>BHP</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="details-grid">
+                <div class="detail-card">
+                    <h3><i class="fas fa-car"></i> Vehicle Details</h3>
+                    {% if brand %}
+                    <div class="detail-item">
+                        <span class="detail-label">Brand:</span>
+                        <span class="detail-value">{{ brand }}</span>
+                    </div>
+                    {% endif %}
+                    <div class="detail-item">
+                        <span class="detail-label">Year:</span>
+                        <span class="detail-value">{{ year }}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Kilometers:</span>
+                        <span class="detail-value">{{ "{:,.0f}".format(km_driven) }}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Fuel Type:</span>
+                        <span class="detail-value">{{ fuel }}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Transmission:</span>
+                        <span class="detail-value">{{ transmission }}</span>
+                    </div>
+                </div>
+
+                <div class="detail-card">
+                    <h3><i class="fas fa-cogs"></i> Engine Specifications</h3>
+                    <div class="detail-item">
+                        <span class="detail-label">Engine:</span>
+                        <span class="detail-value">{{ engine }} CC</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Max Power:</span>
+                        <span class="detail-value">{{ max_power }} BHP</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Torque:</span>
+                        <span class="detail-value">{{ torque_value }} Nm</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Mileage:</span>
+                        <span class="detail-value">{{ mileage }} KMPL</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Seats:</span>
+                        <span class="detail-value">{{ seats }}</span>
+                    </div>
+                </div>
+
+                <div class="detail-card">
+                    <h3><i class="fas fa-user"></i> Seller Information</h3>
+                    <div class="detail-item">
+                        <span class="detail-label">Seller Type:</span>
+                        <span class="detail-value">{{ seller_type }}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Owner:</span>
+                        <span class="detail-value">{{ owner }}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Car Age:</span>
+                        <span class="detail-value">{{ car_age }} years</span>
+                    </div>
+                </div>
+
+                <div class="detail-card">
+                    <h3><i class="fas fa-shield-alt"></i> Insurance Details</h3>
+                    <div class="detail-item">
+                        <span class="detail-label">Status:</span>
+                        <span class="detail-value {{ 'insurance-expired' if real_time_info.insurance.expired else 'insurance-valid' }}">
+                            {{ real_time_info.insurance.status }}
+                        </span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Provider:</span>
+                        <span class="detail-value">{{ real_time_info.insurance.provider }}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Expiry Date:</span>
+                        <span class="detail-value">{{ real_time_info.insurance.expiry_date }}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Days Remaining:</span>
+                        <span class="detail-value">{{ real_time_info.insurance.days_remaining }}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Premium Estimate:</span>
+                        <span class="detail-value">{{ real_time_info.insurance.premium_estimate }}</span>
+                    </div>
+                </div>
+
+                <div class="detail-card">
+                    <h3><i class="fas fa-info-circle"></i> Additional Info</h3>
+                    <div class="detail-item">
+                        <span class="detail-label">Model Accuracy:</span>
+                        <span class="detail-value">90.2%</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Avg Error:</span>
+                        <span class="detail-value">₹57,453</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Prediction Date:</span>
+                        <span class="detail-value">{{ prediction_date }}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Compliance Score:</span>
+                        <span class="detail-value">{{ real_time_info.compliance_score }}%</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="header">
+                <h1><i class="fas fa-chart-line"></i> Car Sales Trends</h1>
+                <p>Last 30 Days Performance Analysis</p>
+            </div>
+
+            <!-- Statistics Cards -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <h3 id="totalSales">2,847</h3>
+                    <p>Total Cars Sold</p>
+                </div>
+                <div class="stat-card">
+                    <h3 id="avgPrice">₹8.2L</h3>
+                    <p>Average Price</p>
+                </div>
+                <div class="stat-card">
+                    <h3 id="totalRevenue">₹23.4Cr</h3>
+                    <p>Total Revenue</p>
+                </div>
+                <div class="stat-card">
+                    <h3 id="growthRate">+12.5%</h3>
+                    <p>Growth Rate</p>
+                </div>
+            </div>
+
+            <!-- Chart Filters -->
+            <div class="chart-filters">
+                <button class="filter-btn active" onclick="updateChart('daily')">Daily</button>
+                <button class="filter-btn" onclick="updateChart('weekly')">Weekly</button>
+                <button class="filter-btn" onclick="updateChart('brand')">By Brand</button>
+                <button class="filter-btn" onclick="updateChart('price')">Price Range</button>
+            </div>
+
+            <!-- Main Chart -->
+            <div class="chart-container">
+                <div class="chart-title">
+                    <i class="fas fa-chart-area"></i>
+                    <span id="chartTitle">Daily Sales Trend - Last 30 Days</span>
+                </div>
+                <div class="loading-spinner" id="loadingSpinner">
+                    <div class="spinner"></div>
+                    <p>Loading chart data...</p>
+                </div>
+                <div class="error-message" id="chartError" style="display: none;">
+                    Failed to load chart. Please try again later.
+                </div>
+                <canvas id="salesChart" style="max-height: 400px; display: none;"></canvas>
+            </div>
+
+            <!-- Brand Performance Cards -->
+            <div class="brand-cards">
+                <div class="brand-card">
+                    <div class="brand-header">
+                        <span class="brand-name">Maruti Suzuki</span>
+                        <span class="brand-sales">847</span>
+                    </div>
+                    <div class="trend-indicator trend-up">
+                        <i class="fas fa-arrow-up"></i>
+                        <span>+15.2% from last month</span>
+                    </div>
+                </div>
+                
+                <div class="brand-card">
+                    <div class="brand-header">
+                        <span class="brand-name">Hyundai</span>
+                        <span class="brand-sales">623</span>
+                    </div>
+                    <div class="trend-indicator trend-up">
+                        <i class="fas fa-arrow-up"></i>
+                        <span>+8.7% from last month</span>
+                    </div>
+                </div>
+                
+                <div class="brand-card">
+                    <div class="brand-header">
+                        <span class="brand-name">Tata</span>
+                        <span class="brand-sales">512</span>
+                    </div>
+                    <div class="trend-indicator trend-up">
+                        <i class="fas fa-arrow-up"></i>
+                        <span>+22.1% from last month</span>
+                    </div>
+                </div>
+                
+                <div class="brand-card">
+                    <div class="brand-header">
+                        <span class="brand-name">Mahindra</span>
+                        <span class="brand-sales">389</span>
+                    </div>
+                    <div class="trend-indicator trend-down">
+                        <i class="fas fa-arrow-down"></i>
+                        <span>-3.4% from last month</span>
+                    </div>
+                </div>
+                
+                <div class="brand-card">
+                    <div class="brand-header">
+                        <span class="brand-name">Honda</span>
+                        <span class="brand-sales">276</span>
+                    </div>
+                    <div class="trend-indicator trend-up">
+                        <i class="fas fa-arrow-up"></i>
+                        <span>+5.9% from last month</span>
+                    </div>
+                </div>
+                
+                <div class="brand-card">
+                    <div class="brand-header">
+                        <span class="brand-name">Others</span>
+                        <span class="brand-sales">200</span>
+                    </div>
+                    <div class="trend-indicator trend-up">
+                        <i class="fas fa-arrow-up"></i>
+                        <span>+11.3% from last month</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="action-buttons">
+                <a href="/pre" class="btn btn-primary">
+                    <i class="fas fa-calculator"></i> New Prediction
+                </a>
+                <button onclick="window.print()" class="btn btn-secondary">
+                    <i class="fas fa-print"></i> Print Results
+                </button>
+                <button onclick="shareResults()" class="btn btn-secondary">
+                    <i class="fas fa-share"></i> Share
+                </button>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <script>
+        let salesChart;
+        let currentFilter = 'daily';
+
+        // Sample data for the last 30 days
+        const salesData = {
+            daily: {
+                labels: generateLast30Days(),
+                datasets: [{
+                    label: 'Cars Sold',
+                    data: generateRandomData(30, 60, 120),
+                    borderColor: '#3b82f6',
+                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.4,
+                    pointBackgroundColor: '#3b82f6',
+                    pointBorderColor: '#ffffff',
+                    pointBorderWidth: 2,
+                    pointRadius: 4,
+                    pointHoverRadius: 6
+                }]
+            },
+            weekly: {
+                labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
+                datasets: [{
+                    label: 'Cars Sold',
+                    data: [687, 734, 812, 614],
+                    borderColor: '#8b5cf6',
+                    backgroundColor: 'rgba(139, 92, 246, 0.1)',
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.4,
+                    pointBackgroundColor: '#8b5cf6',
+                    pointBorderColor: '#ffffff',
+                    pointBorderWidth: 2,
+                    pointRadius: 6,
+                    pointHoverRadius: 8
+                }]
+            },
+            brand: {
+                labels: ['Maruti', 'Hyundai', 'Tata', 'Mahindra', 'Honda', 'Others'],
+                datasets: [{
+                    label: 'Sales by Brand',
+                    data: [847, 623, 512, 389, 276, 200],
+                    borderColor: '#06b6d4',
+                    backgroundColor: [
+                        'rgba(59, 130, 246, 0.8)',
+                        'rgba(139, 92, 246, 0.8)',
+                        'rgba(6, 182, 212, 0.8)',
+                        'rgba(16, 185, 129, 0.8)',
+                        'rgba(245, 158, 11, 0.8)',
+                        'rgba(239, 68, 68, 0.8)'
+                    ],
+                    borderWidth: 2,
+                    type: 'bar'
+                }]
+            },
+            price: {
+                labels: ['<3L', '3-5L', '5-8L', '8-12L', '12-20L', '>20L'],
+                datasets: [{
+                    label: 'Sales by Price Range',
+                    data: [456, 789, 912, 534, 123, 33],
+                    borderColor: '#10b981',
+                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.4,
+                    pointBackgroundColor: '#10b981',
+                    pointBorderColor: '#ffffff',
+                    pointBorderWidth: 2,
+                    pointRadius: 5,
+                    pointHoverRadius: 7
+                }]
+            }
+        };
+
+        function generateLast30Days() {
+            const days = [];
+            for (let i = 29; i >= 0; i--) {
+                const date = new Date();
+                date.setDate(date.getDate() - i);
+                days.push(date.getDate() + '/' + (date.getMonth() + 1));
+            }
+            return days;
+        }
+
+        function generateRandomData(count, min, max) {
+            return Array.from({length: count}, () => 
+                Math.floor(Math.random() * (max - min + 1)) + min
+            );
+        }
+
+        function initChart() {
+            const canvas = document.getElementById('salesChart');
+            const chartError = document.getElementById('chartError');
+            const loadingSpinner = document.getElementById('loadingSpinner');
+
+            if (!canvas || !canvas.getContext) {
+                console.error('Canvas element not found or not supported');
+                chartError.style.display = 'block';
+                loadingSpinner.style.display = 'none';
+                return;
+            }
+
+            try {
+                const ctx = canvas.getContext('2d');
+                
+                Chart.defaults.color = '#94a3b8';
+                Chart.defaults.backgroundColor = 'rgba(59, 130, 246, 0.1)';
+                Chart.defaults.borderColor = 'rgba(59, 130, 246, 0.3)';
+
+                salesChart = new Chart(ctx, {
+                    type: 'line',
+                    data: salesData.daily,
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'top',
+                                labels: {
+                                    usePointStyle: true,
+                                    padding: 20,
+                                    font: {
+                                        size: 12,
+                                        weight: 'bold'
+                                    }
+                                }
+                            },
+                            tooltip: {
+                                backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                                titleColor: '#ffffff',
+                                bodyColor: '#ffffff',
+                                borderColor: '#3b82f6',
+                                borderWidth: 1,
+                                cornerRadius: 10,
+                                displayColors: true,
+                                intersect: false,
+                                mode: 'index',
+                                callbacks: {
+                                    title: function(context) {
+                                        return `Date: ${context[0].label}`;
+                                    },
+                                    label: function(context) {
+                                        return `${context.dataset.label}: ${context.parsed.y} cars`;
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                grid: {
+                                    color: 'rgba(255, 255, 255, 0.1)',
+                                    drawBorder: false
+                                },
+                                ticks: {
+                                    color: '#94a3b8',
+                                    font: {
+                                        size: 11
+                                    }
+                                }
+                            },
+                            y: {
+                                beginAtZero: true,
+                                grid: {
+                                    color: 'rgba(255, 255, 255, 0.1)',
+                                    drawBorder: false
+                                },
+                                ticks: {
+                                    color: '#94a3b8',
+                                    font: {
+                                        size: 11
+                                    },
+                                    callback: function(value) {
+                                        return value + ' cars';
+                                    }
+                                }
+                            }
+                        },
+                        elements: {
+                            point: {
+                                hoverBackgroundColor: '#ffffff',
+                                hoverBorderColor: '#3b82f6',
+                                hoverBorderWidth: 3
+                            }
+                        },
+                        interaction: {
+                            intersect: false,
+                            mode: 'index'
+                        },
+                        animation: {
+                            duration: 2000,
+                            easing: 'easeInOutQuart'
+                        }
+                    }
+                });
+
+                canvas.style.display = 'block';
+                loadingSpinner.style.display = 'none';
+            } catch (error) {
+                console.error('Chart initialization failed:', error);
+                chartError.style.display = 'block';
+                loadingSpinner.style.display = 'none';
+            }
+        }
+
+        function updateChart(filter) {
+            const chartError = document.getElementById('chartError');
+            const loadingSpinner = document.getElementById('loadingSpinner');
+            const canvas = document.getElementById('salesChart');
+
+            // Show loading spinner
+            loadingSpinner.style.display = 'block';
+            canvas.style.display = 'none';
+            chartError.style.display = 'none';
+            
+            // Update active filter button
+            document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            setTimeout(() => {
+                try {
+                    currentFilter = filter;
+                    const data = salesData[filter];
+                    
+                    // Update chart title
+                    const titles = {
+                        daily: 'Daily Sales Trend - Last 30 Days',
+                        weekly: 'Weekly Sales Performance',
+                        brand: 'Sales by Brand - Last Month',
+                        price: 'Sales by Price Range'
+                    };
+                    document.getElementById('chartTitle').textContent = titles[filter];
+                    
+                    // Update chart type based on filter
+                    if (filter === 'brand') {
+                        salesChart.config.type = 'bar';
+                        salesChart.options.scales.y.ticks.callback = function(value) {
+                            return value + ' cars';
+                        };
+                    } else {
+                        salesChart.config.type = 'line';
+                    }
+                    
+                    // Update chart data
+                    salesChart.data = data;
+                    salesChart.update('active');
+                    
+                    // Hide loading spinner and show chart
+                    canvas.style.display = 'block';
+                    loadingSpinner.style.display = 'none';
+                    
+                    // Update statistics based on filter
+                    updateStats(filter);
+                } catch (error) {
+                    console.error('Chart update failed:', error);
+                    chartError.style.display = 'block';
+                    loadingSpinner.style.display = 'none';
+                    canvas.style.display = 'none';
+                }
+            }, 1000);
+        }
+
+        function updateStats(filter) {
+            const stats = {
+                daily: { total: 2847, avg: '₹8.2L', revenue: '₹23.4Cr', growth: '+12.5%' },
+                weekly: { total: 2847, avg: '₹8.5L', revenue: '₹24.2Cr', growth: '+15.2%' },
+                brand: { total: 2847, avg: '₹8.1L', revenue: '₹23.1Cr', growth: '+11.8%' },
+                price: { total: 2847, avg: '₹7.9L', revenue: '₹22.5Cr', growth: '+9.3%' }
+            };
+            
+            const stat = stats[filter];
+            document.getElementById('totalSales').textContent = stat.total.toLocaleString();
+            document.getElementById('avgPrice').textContent = stat.avg;
+            document.getElementById('totalRevenue').textContent = stat.revenue;
+            document.getElementById('growthRate').textContent = stat.growth;
+        }
+
+        // Initialize the chart when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(() => {
+                initChart();
+                
+                // Animate number counters
+                animateCounters();
+                
+                // Add entrance animations to cards
+                const cards = document.querySelectorAll('.stat-card, .brand-card');
+                cards.forEach((card, index) => {
+                    card.style.opacity = '0';
+                    card.style.transform = 'translateY(20px)';
+                    setTimeout(() => {
+                        card.style.transition = 'all 0.6s ease';
+                        card.style.opacity = '1';
+                        card.style.transform = 'translateY(0)';
+                    }, index * 100);
+                });
+            }, 500);
+        });
+
+        function animateCounters() {
+            const counters = document.querySelectorAll('.stat-card h3');
+            
+            counters.forEach(counter => {
+                const target = counter.textContent;
+                let current = 0;
+                const increment = target.includes('₹') || target.includes('%') ? 1 : 50;
+                const duration = 2000;
+                const steps = duration / 16; // 60fps
+                const stepValue = increment;
+                
+                const timer = setInterval(() => {
+                    if (target.includes('₹')) {
+                        // Handle currency values
+                        if (current < 25) {
+                            current += 0.1;
+                            counter.textContent = '₹' + current.toFixed(1) + target.slice(-2);
+                        } else {
+                            clearInterval(timer);
+                            counter.textContent = target;
+                        }
+                    } else if (target.includes('%')) {
+                        // Handle percentage values
+                        if (current < 12.5) {
+                            current += 0.2;
+                            counter.textContent = '+' + current.toFixed(1) + '%';
+                        } else {
+                            clearInterval(timer);
+                            counter.textContent = target;
+                        }
+                    } else {
+                        // Handle regular numbers
+                        if (current < 2847) {
+                            current += stepValue;
+                            counter.textContent = current.toLocaleString();
+                        } else {
+                            clearInterval(timer);
+                            counter.textContent = target;
+                        }
+                    }
+                }, 16);
+            });
+        }
+
+        // Add real-time data simulation
+        setInterval(() => {
+            if (currentFilter === 'daily' && salesChart) {
+                // Simulate real-time updates
+                const lastDataPoint = salesChart.data.datasets[0].data[29];
+                const newValue = lastDataPoint + Math.floor(Math.random() * 10) - 5;
+                salesChart.data.datasets[0].data[29] = Math.max(0, newValue);
+                salesChart.update('none');
+            }
+        }, 5000);
+
+        // Add keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            switch(e.key) {
+                case '1':
+                    updateChart('daily');
+                    break;
+                case '2':
+                    updateChart('weekly');
+                    break;
+                case '3':
+                    updateChart('brand');
+                    break;
+                case '4':
+                    updateChart('price');
+                    break;
+            }
+        });
+
+        // Add responsive chart resizing
+        window.addEventListener('resize', function() {
+            if (salesChart) {
+                salesChart.resize();
+            }
+        });
+
+        // Utility functions
+        function shareResults() {
+            if (navigator.share) {
+                navigator.share({
+                    title: 'My Car Price Prediction',
+                    text: 'Check out my car price prediction results - ₹8,45,000!',
+                    url: window.location.href
+                });
+            } else {
+                const url = window.location.href;
+                navigator.clipboard.writeText(url).then(() => {
+                    alert('Link copied to clipboard!');
+                });
+            }
+        }
+
+        function downloadPDF() {
+            alert('PDF download feature coming soon!');
+        }
+
+        // Page load animation
+        document.addEventListener('DOMContentLoaded', function() {
+            const container = document.querySelector('.container');
+            container.style.opacity = '0';
+            container.style.transform = 'translateY(20px)';
+            container.style.transition = 'all 0.8s ease';
+            
+            setTimeout(() => {
+                container.style.opacity = '1';
+                container.style.transform = 'translateY(0)';
+            }, 100);
+        });
+
+        // Add floating animation to cards
+        const cards = document.querySelectorAll('.detail-card, .chart-card, .metric-item');
+        cards.forEach((card, index) => {
+            card.style.animationDelay = `${index * 0.1}s`;
+            card.style.animation = 'fadeInUp 0.6s ease forwards';
+        });
+
+        // Add CSS keyframes for animations
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes fadeInUp {
+                from {
+                    opacity: 0;
+                    transform: translateY(30px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+        `;
+        document.head.appendChild(style);
+
+        // Add interactive hover effects
+        const alertCards = document.querySelectorAll('.alert-card');
+        alertCards.forEach(card => {
+            card.addEventListener('mouseenter', function() {
+                this.style.transform = 'translateY(-3px)';
+                this.style.boxShadow = '0 10px 25px rgba(0, 0, 0, 0.2)';
+            });
+            
+            card.addEventListener('mouseleave', function() {
+                this.style.transform = 'translateY(0)';
+                this.style.boxShadow = 'none';
+            });
+        });
+
+        // Add scroll reveal animation
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.opacity = '1';
+                    entry.target.style.transform = 'translateY(0)';
+                }
+            });
+        }, observerOptions);
+
+        // Observe all cards for scroll animations
+        document.querySelectorAll('.detail-card, .chart-card, .alert-card').forEach(card => {
+            card.style.opacity = '0';
+            card.style.transform = 'translateY(20px)';
+            card.style.transition = 'all 0.6s ease';
+            observer.observe(card);
+        });
+
+        // Add dynamic price counter animation
+        function animateValue(element, start, end, duration) {
+            let startTimestamp = null;
+            const step = (timestamp) => {
+                if (!startTimestamp) startTimestamp = timestamp;
+                const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+                const currentValue = Math.floor(progress * (end - start) + start);
+                element.textContent = '₹' + currentValue.toLocaleString('en-IN');
+                if (progress < 1) {
+                    window.requestAnimationFrame(step);
+                }
+            };
+            window.requestAnimationFrame(step);
+        }
+
+        // Animate price value on page load
+        setTimeout(() => {
+            const priceElement = document.querySelector('.price-value');
+            if (priceElement) {
+                animateValue(priceElement, 0, 845000, 2000);
+            }
+        }, 500);
+
+        // Add real-time data updates simulation
+        function updateMetrics() {
+            const metrics = document.querySelectorAll('.metric-item h4');
+            metrics.forEach(metric => {
+                const currentValue = parseInt(metric.textContent.replace(/,/g, ''));
+                const variation = Math.random() * 0.02 - 0.01; // ±1% variation
+                const newValue = Math.floor(currentValue * (1 + variation));
+                metric.textContent = newValue.toLocaleString('en-IN');
+            });
+        }
+
+        // Update metrics every 30 seconds (simulate real-time data)
+        setInterval(updateMetrics, 30000);
+
+        // Add keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            if (e.ctrlKey || e.metaKey) {
+                switch(e.key) {
+                    case 'p':
+                        e.preventDefault();
+                        window.print();
+                        break;
+                    case 's':
+                        e.preventDefault();
+                        shareResults();
+                        break;
+                    case 'd':
+                        e.preventDefault();
+                        downloadPDF();
+                        break;
+                }
+            }
+        });
+
+        // Add tooltip functionality
+        const detailValues = document.querySelectorAll('.detail-value');
+        detailValues.forEach(value => {
+            value.addEventListener('mouseenter', function() {
+                this.style.cursor = 'help';
+                this.title = 'Click for more details';
+            });
+        });
+
+        // Add smooth scrolling for navigation
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+
+        // Add loading state for buttons
+        const buttons = document.querySelectorAll('.btn');
+        buttons.forEach(button => {
+            button.addEventListener('click', function() {
+                if (this.textContent.includes('New Prediction')) {
+                    this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading...';
+                    setTimeout(() => {
+                        this.innerHTML = '<i class="fas fa-calculator"></i> New Prediction';
+                    }, 2000);
+                }
+            });
+        });
+
+        // Add performance monitoring
+        if ('performance' in window) {
+            window.addEventListener('load', function() {
+                const loadTime = performance.timing.loadEventEnd - performance.timing.navigationStart;
+                console.log('Page loaded in:', loadTime, 'ms');
+            });
+        });
+    </script>
+</body>
+</html>
