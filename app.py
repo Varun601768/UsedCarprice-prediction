@@ -37,9 +37,9 @@ app = Flask(__name__)
 # Email configuration
 SMTP_SERVER = "smtp.gmail.com"
 SMTP_PORT = 587
-EMAIL_ADDRESS = "pernajechandan@gmail.com"  # Replace with your Gmail
-EMAIL_PASSWORD = "pgnq zbkq fqkf mjbb"    # Replace with your Gmail App Password
-RECIPIENT_EMAIL = "pernajechandan@gmail.com" 
+EMAIL_ADDRESS = "chandanpernaje2@gmail.com"  # Replace with your Gmail
+EMAIL_PASSWORD = "uhts nkmo trtn mogo"    # Replace with your Gmail App Password
+RECIPIENT_EMAIL = "chandanpernaje2@gmail.com" 
 
 app.secret_key = os.environ.get('SECRET_KEY', '9f1c56e5a0d1e49d9187a1e2d9f3bc458cb29b15d2bfa35e38f2364775b9f9a7')
 CORS(app)  # Enable CORS for API endpoints
