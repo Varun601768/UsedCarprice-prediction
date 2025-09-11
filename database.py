@@ -9,12 +9,12 @@ class Database:
        self.connection_string = os.environ.get('MONGODB_URI')
        if not self.connection_string:
           raise ValueError("MONGODB_URI environment variable not set")
-        self.database_name = 'UsedCar'
-        self.client = None
-        self.db = None
-        self.users_collection = None
-        self.cars_collection = None
-        self.connect()
+       self.database_name = 'UsedCar'
+       self.client = None
+       self.db = None
+       self.users_collection = None
+       self.cars_collection = None
+       self.connect()
     
     def connect(self):
         """Connect to MongoDB database"""
