@@ -6,8 +6,9 @@ from datetime import datetime
 
 class Database:
     def __init__(self):
-        # MongoDB connection string - update with your MongoDB details
-        self.connection_string = os.environ.get('MONGODB_URI', 'mongodb://localhost:27017/')
+       self.connection_string = os.environ.get('MONGODB_URI')
+       if not self.connection_string:
+          raise ValueError("MONGODB_URI environment variable not set")
         self.database_name = 'UsedCar'
         self.client = None
         self.db = None
