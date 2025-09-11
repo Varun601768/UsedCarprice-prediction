@@ -8,7 +8,7 @@ class Database:
     def __init__(self):
         # MongoDB connection string - update with your MongoDB details
         self.connection_string = os.environ.get('MONGODB_URI', 'mongodb://localhost:27017/')
-        self.database_name = 'UsedCar'
+        self.database_name = 'varunmcchinthu_db_user'
         self.client = None
         self.db = None
         self.users_collection = None
