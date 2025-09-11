@@ -9,7 +9,7 @@ class Database:
        self.connection_string = os.environ.get('MONGODB_URI')
        if not self.connection_string:
           raise ValueError("MONGODB_URI environment variable not set")
-       self.database_name = 'UsedCar'
+       self.database_name = 'varunmcchinthu_db_user'
        self.client = None
        self.db = None
        self.users_collection = None
